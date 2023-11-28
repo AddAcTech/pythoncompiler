@@ -4,7 +4,7 @@ int main () {
 
     }
     cout << "Hola";
-    for ( i = 0; i < count; I++){
+    for ( i = 0; i < count; ++i){
         cout<<"si";
         cout<<a;
     }
