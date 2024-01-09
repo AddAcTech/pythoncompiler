@@ -1,53 +1,78 @@
 import re
 
-def analizador_sintactico(tokens):
-    reglas_sintacticas = {
-        'DECLARACION': r'TYPE\s+ID(?:\s+ASIG\s+(NUM|FLOAT))?(?:\s*COMA\s*ID(?:\s+ASIG\s+(NUM|FLOAT))?)*\s+ENDL',
-        'ASIGNACION': r'ID ASIG (NUM|FLOAT) ENDL',
-        'IGUALDAD': r'ID REL (NUM|FLOAT) ENDL',
-        'LIBRARY': r'ID REL ID REL',
-        'FUNCTION': r'TYPE\s+ID\s+PA\s+PC\s+LA',
-        'EMPY': r'|LA|LC',
-        'DO': r'ID DO|ID DO LA',
-        'DO': r'(\s)*ID DO|DO LA',
-        'FOR': r'FOR\s+PA\s+(TYPE\s+ID\s+ASIG\s+NUM\s+ENDL|ID\s+ASIG\s+NUM\s+ENDL)\s+ID\s+REL\s+ID\s+ENDL\s+ID\s+(ARIT\s+ARIT\s+PC|ARIT\s+ARIT\s+PC\s+LA)',
-        'FOR': r'FOR\s+PA\s+(TYPE\s+ID\s+ASIG\s+NUM\s+ENDL|ID\s+ASIG\s+NUM\s+ENDL)\s+ID\s+REL\s+ID\s+ENDL\s+ID\s+(ARIT\s+ARIT\s+PC|ARIT\s+ARIT\s+PC\s)',
-        'FOR': r'FOR\s+PA\s+(TYPE\s+ID\s+ASIG\s+NUM\s+ENDL|ID\s+ASIG\s+NUM\s+ENDL)\s+ID\s+REL\s+ID\s+ENDL\s+(ARIT\s+ARIT\s+ID\s+PC|ARIT\s+ARIT\s+ID\s+PC\s+LA)',
-        'RETURN': r'RET (ID|TRUE|FALSE|NUM)\s*ENDL',
-        'COUTCIN': r'IO REL REL (COMILLAS (ID|(ID )*) COMILLAS|ID) ENDL',
-        'IF': r'IF PA ID REL (ASIG ASIG (NUM|ID)|ASIG (NUM|ID)) PC LA',
-        'IF2': r'IF PA ID REL (ASIG ASIG (NUM|ID)|ASIG (NUM|ID)) PC',
-        'IF2': r'IF PA ID REL (ASIG ASIG (NUM|ID)|ASIG (NUM|ID))',
-        'IF2': r'IF PA ID REL ID PC',
-        'ELSE': r'ELSE',
-        'ELSE2': r'ELSE LA',
-        'WHILE': r'LC WHILE PA ID REL ID PC ENDL',
-        'WHILE2': r'WHILE PA ID REL ID PC ENDL',
-        'FUNCT': r'TYPE ID PA TYPE ID COMA TYPE ID PC LA',
-        'FUNCT2': r'RET ID ARIT ID ENDL',
-        'FUNCT3': r'RET ID ENDL',
-        'FUNCT_CALL_ASIG': r'TYPE ID ASIG ID PA NUM COMA NUM PC ENDL',
-        'FUNCT_CALL_ASIG4': r'TYPE ID ASIG ID PA (NUM COMA NUM)+ PC ENDL',
-        'FUNCT_CALL_ASIG2': r'TYPE ID ASIG ID PA PC ENDL',
-    }
+# Arreglo para almacenar los nombres de las funciones
+nombre_de_funciones = []
 
-    num=1
-    for tokens_linea in tokens:
-        linea = ' '.join(tokens_linea)
-        for regla, patron in reglas_sintacticas.items():
-            if re.fullmatch(patron, linea):
-                print(f"{num} +++  Valida  +++")
-                break
-        else:
-            print(f'{num} --- Invalida ---')
-        num=num +1
+def analizador_lexico(linea):
+    global nombre_de_funciones
+    
+    # Definir expresiones regulares para diferentes tokens
+    patrones = [
+        (r'\b(?:int|float|char|double|void)\s+(\w+)\s*\(([^)]*)\)\s*;', 'FUNCT'),  # Funcion
+        (r'//[^\n]*', 'COMENT'),  # Comentarios
+        (r'\b(int|float|char|double|void)\b', 'TYPE'),  # Tipos de datos
+        (r'\b(#include)\b', 'LIB'),  # Palabras reservadas
+        (r'\b(return)\b', 'RET'),  # Palabras reservadas
+        (r'\b(if|IF)\b', 'IF'),  # Palabras reservadas
+        (r'\b(for|FOR)\b', 'FOR'),  # Palabras reservadas
+        (r'\b(while|WHILE)\b', 'WHILE'),  # Palabras reservadas
+        (r'\b(else|ELSE)\b', 'ELSE'),  # Palabras reservadas
+        (r'\b(true|false)\b', 'TF'),  # Valores booleanos
+        (r'\b(cin|cout)\b', 'IO'),  # Entrada y salida estándar
+        (r'\b[0-9]+\b', 'NUM'),  # Números enteros
+        (r'[0-9]+\.[0-9]+', 'FLOAT'),  # Números de punto flotante
+        (r'"', 'COMILLAS'),  # Cadenas
+        (r'\'(\\\'|[^\'])\'', 'CHAR'),  # Caracteres
+        (r'\b(?!int|float|char|double|void|if|else|while|for|return|true|false|cin|cout)\b[a-zA-Z_][a-zA-Z0-9_]*\b', 'ID'), # Identificadores
+        (r'==|!=|<|>|<=|>=', 'REL'),  # Operadores relacionales
+        (r'[\+\-\*/%]', 'ARIT'),  # Operadores aritméticos
+        (r'=|\+=|-=|\*=|/=|%=', 'ASIG'),  # Operadores de asignación
+        (r';', 'ENDL'),  # Punto y coma
+        (r'(\s)*do(\s)*', 'DO'),  # Punto y coma
+        (r',', 'COMA'),  # Coma
+        (r'\(', 'PA'),   # Paréntesis abre
+        (r'\)', 'PC'),   # Paréntesis cierra
+        (r'{', 'LA'),    # Llave abre
+        (r'}', 'LC'),    # Llave cierra
+        (r'\b(\w+)\s*\(([^)]*)\)\s*;', 'FUNCCALL'),  # Llamada a función
+    ]
+
+    tokens = []
+    for patron, tipo in patrones:
+        regex = re.compile(patron)
+        coincidencias = regex.finditer(linea)
+
+        for coincidencia in coincidencias:
+            if tipo == 'FUNCT':
+                # Almacenar el nombre de la función
+                nombre_funcion = coincidencia.group(1)
+                nombre_de_funciones.append(nombre_funcion)
+                
+            elif tipo == 'FUNCCALL':
+                # Verificar si la función llamada existe en el arreglo
+                nombre_llamada = coincidencia.group(1)
+                if nombre_llamada not in nombre_de_funciones:
+                    tokens.append(('NODECL', 'NODECL', coincidencia.start()))
+
+            tokens.append((coincidencia.group(), tipo, coincidencia.start()))
+
+    # Ordenar los tokens por su posición de inicio en la línea original
+    tokens = sorted(tokens, key=lambda x: x[2])
+
+    return tokens
+
+def analizar_archivo(archivo_entrada, archivo_salida):
+    global nombre_de_funciones
+    
+    with open(archivo_entrada, 'r') as archivo_entrada:
+        with open(archivo_salida, 'w') as archivo_salida:
+            for linea in archivo_entrada:
+                tokens = analizador_lexico(linea.strip())
+                for token, tipo, _ in tokens:
+                    archivo_salida.write(f'{tipo} ')
+                archivo_salida.write('\n')
 
 if __name__ == "__main__":
-    archivo_entrada = 'tokens.txt'
-
-    with open(archivo_entrada, 'r') as archivo:
-        lineas = archivo.readlines()
-
-    tokens_por_linea = [linea.split() for linea in lineas]
-
-    analizador_sintactico(tokens_por_linea)
+    archivo_entrada = 'codigo.cpp'
+    archivo_salida = 'tokens.txt'
+    analizar_archivo(archivo_entrada, archivo_salida)

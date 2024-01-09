@@ -1,8 +1,14 @@
 import re
-##Busacar el nombre de la funcion, regex que retorne el tipo, asignacion
+
+# Arreglo para almacenar los nombres de las funciones
+nombre_de_funciones = []
+
 def analizador_lexico(linea):
+    global nombre_de_funciones
+    
     # Definir expresiones regulares para diferentes tokens
     patrones = [
+        (r'\b(?:int|float|char|double|void)\s+(\w+)\s*\(([^)]*)\)\s*{', 'FUNCT'),  # Funcion
         (r'//[^\n]*', 'COMENT'),  # Comentarios
         (r'\b(int|float|char|double|void)\b', 'TYPE'),  # Tipos de datos
         (r'\b(#include)\b', 'LIB'),  # Palabras reservadas
@@ -28,16 +34,26 @@ def analizador_lexico(linea):
         (r'\)', 'PC'),   # Paréntesis cierra
         (r'{', 'LA'),    # Llave abre
         (r'}', 'LC'),    # Llave cierra
-        (r'\[', 'CA'),   # Corchete abre
-        (r'\]', 'CC'),   # Corchete cierra
+        (r'\b(\w+)\s*\(([^)]*)\)\s*;', 'FUNCCALL'),  # Llamada a función
     ]
 
     tokens = []
-
     for patron, tipo in patrones:
         regex = re.compile(patron)
         coincidencias = regex.finditer(linea)
+
         for coincidencia in coincidencias:
+            if tipo == 'FUNCT':
+                # Almacenar el nombre de la función
+                nombre_funcion = coincidencia.group(1)
+                nombre_de_funciones.append(nombre_funcion)
+                
+            elif tipo == 'FUNCCALL':
+                # Verificar si la función llamada existe en el arreglo
+                nombre_llamada = coincidencia.group(1)
+                if nombre_llamada not in nombre_de_funciones:
+                    tokens.append(('NODECL', 'NODECL', coincidencia.start()))
+
             tokens.append((coincidencia.group(), tipo, coincidencia.start()))
 
     # Ordenar los tokens por su posición de inicio en la línea original
@@ -46,6 +62,8 @@ def analizador_lexico(linea):
     return tokens
 
 def analizar_archivo(archivo_entrada, archivo_salida):
+    global nombre_de_funciones
+    
     with open(archivo_entrada, 'r') as archivo_entrada:
         with open(archivo_salida, 'w') as archivo_salida:
             for linea in archivo_entrada:
