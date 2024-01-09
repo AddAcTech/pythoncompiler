@@ -1,8 +1,7 @@
 #include <iostream>
 
-int ejemplo (int a, int b){
-    if (a>b)
-    {
+int ejemplo (int a, int b,int c){
+    if (a>b){
     return a;
     }
     else{   
@@ -12,7 +11,7 @@ int ejemplo (int a, int b){
 }
 
 int a = ejemplo(1,2);
-
+ejemplo(1,2);
 int main () {
     if (a==b){
 
