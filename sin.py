@@ -17,8 +17,18 @@ def analizador_sintactico(tokens):
         'COUTCIN': r'IO REL REL (COMILLAS (ID|(ID )*) COMILLAS|ID) ENDL',
         'IF': r'IF PA ID REL (ASIG ASIG (NUM|ID)|ASIG (NUM|ID)) PC LA',
         'IF2': r'IF PA ID REL (ASIG ASIG (NUM|ID)|ASIG (NUM|ID)) PC',
+        'IF2': r'IF PA ID REL (ASIG ASIG (NUM|ID)|ASIG (NUM|ID))',
+        'IF2': r'IF PA ID REL ID PC',
+        'ELSE': r'ELSE',
+        'ELSE2': r'ELSE LA',
         'WHILE': r'LC WHILE PA ID REL ID PC ENDL',
         'WHILE2': r'WHILE PA ID REL ID PC ENDL',
+        'FUNCT': r'TYPE ID PA TYPE ID COMA TYPE ID PC LA',
+        'FUNCT2': r'RET ID ARIT ID ENDL',
+        'FUNCT3': r'RET ID ENDL',
+        'FUNCT_CALL_ASIG': r'TYPE ID ASIG ID PA NUM COMA NUM PC ENDL',
+        'FUNCT_CALL_ASIG4': r'TYPE ID ASIG ID PA (NUM COMA NUM)+ PC ENDL',
+        'FUNCT_CALL_ASIG2': r'TYPE ID ASIG ID PA PC ENDL',
     }
 
     num=1

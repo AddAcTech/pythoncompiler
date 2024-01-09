@@ -1,5 +1,5 @@
 import re
-
+##Busacar el nombre de la funcion, regex que retorne el tipo, asignacion
 def analizador_lexico(linea):
     # Definir expresiones regulares para diferentes tokens
     patrones = [
